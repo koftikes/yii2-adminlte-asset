@@ -4,6 +4,7 @@ namespace sbs\widgets;
 
 use Yii;
 use sbs\models\UserInterface;
+use yii\base\InvalidConfigException;
 use yii\bootstrap\Widget;
 use yii\bootstrap\Html;
 
@@ -27,38 +28,49 @@ class NavBarUser extends Widget
 
         $interfaces = class_implements($this->user);
         if (!isset($interfaces['sbs\models\UserInterface'])) {
-            return false;
+            throw new InvalidConfigException('User should implement UserInterface.');
         }
         parent::init();
+    }
 
-        echo Html::beginTag('li', ['class' => 'dropdown user user-menu']);
-        echo Html::a(
-            $this->getAvatar('user-image') . Html::tag('span', $this->user->getName(), ['class' => 'hidden-xs']), '#',
-            ['class' => 'dropdown-toggle', 'data-toggle' => 'dropdown']
-        );
-        echo Html::beginTag('ul', ['class' => 'dropdown-menu']);
-        echo Html::beginTag('li', ['class' => 'user-header']);
-        echo $this->getAvatar('img-circle');
+    public function run()
+    {
+        return Html::tag('li',
+            Html::a(
+                $this->getAvatar('user-image') . Html::tag('span', $this->user->getName(), ['class' => 'hidden-xs']),
+                '#', ['class' => 'dropdown-toggle', 'data-toggle' => 'dropdown']) .
+            Html::tag('ul', $this->getHeader() . $this->getInfo() . $this->getFooter(), ['class' => 'dropdown-menu']),
+            ['class' => 'dropdown user user-menu']);
+    }
+
+    protected function getHeader()
+    {
         $user = $this->user->getName();
         $user .= ($this->user->getTitle()) ? ' - ' . $this->user->getTitle() : '';
-        $user .= Html::tag('small', Yii::t('back', 'Member since: ') . $this->user->getMemberSince());
-        echo Html::tag('p', $user);
-        echo Html::endTag('li');
+        $user .= Html::tag('small', Yii::t('backend', 'Member since: ') . $this->user->getMemberSince());
+
+        return Html::tag('li', $this->getAvatar('img-circle') . Html::tag('p', $user), ['class' => 'user-header']);
+    }
+
+    protected function getInfo()
+    {
         if ($this->user->getInfo()) {
-            echo Html::beginTag('li', ['class' => 'user-body']);
-            echo Html::beginTag('div', ['class' => 'row']);
-            echo Html::tag('div', $this->user->getInfo(), ['class' => 'col-xs-12 text-center']);
-            echo Html::endTag('div');
-            echo Html::endTag('li');
+            return Html::tag('li',
+                Html::tag('div', Html::tag('div', $this->user->getInfo(), ['class' => 'col-xs-12 text-center']),
+                    ['class' => 'row']), ['class' => 'user-body']);
         }
-        echo Html::beginTag('li', ['class' => 'user-footer']);
-        echo Html::tag('div', Html::a(Yii::t('back', 'Profile'), [$this->profileUrl],
+
+        return '';
+    }
+
+    protected function getFooter()
+    {
+        $profile = Html::tag('div', Html::a(Yii::t('backend', 'Profile'), [$this->profileUrl],
             ['data-method' => 'post', 'class' => 'btn btn-default btn-flat']), ['class' => 'pull-left']);
-        echo Html::tag('div', Html::a(Yii::t('back', 'Sign out'), [$this->logoutUrl],
+        $logout = Html::tag('div', Html::a(Yii::t('backend', 'Sign out'), [$this->logoutUrl],
             ['data-method' => 'post', 'class' => 'btn btn-default btn-flat']), ['class' => 'pull-right']);
-        echo Html::endTag('li');
-        echo Html::endTag('ul');
-        echo Html::endTag('li');
+
+        return Html::tag('li', $profile . $logout, ['class' => 'user-footer']);
     }
 
     protected function getAvatar($class)
