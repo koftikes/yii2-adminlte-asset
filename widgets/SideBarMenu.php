@@ -84,11 +84,6 @@ class SideBarMenu extends Widget
     private $params;
 
     /**
-     * @var bool use for active all level in menu. If a child item is active activating the parent.
-     */
-    private $active = false;
-
-    /**
      * Initializes the widget.
      */
     public function init()
@@ -163,7 +158,7 @@ class SideBarMenu extends Widget
         $items = ArrayHelper::getValue($item, 'items');
         $url = ArrayHelper::getValue($item, 'url', '#');
         $linkOptions = ArrayHelper::getValue($item, 'linkOptions', []);
-        $this->active = $this->isItemActive($item);
+        $active = $this->isItemActive($item);
 
         if ($items !== null) {
             Html::addCssClass($options, ['widget' => 'treeview']);
@@ -171,15 +166,34 @@ class SideBarMenu extends Widget
                 $label .= ' ' . $this->treeViewCaret;
             }
             if (is_array($items)) {
+                $items = $this->isChildActive($items, $active);
                 $items = $this->renderItems($items, ['class' => 'treeview-menu']);
             }
         }
 
-        if ($this->active) {
+        if ($active) {
             Html::addCssClass($options, 'active');
         }
 
         return Html::tag('li', Html::a($label, $url, $linkOptions) . $items, $options);
+    }
+
+    /**
+     * Check to see if a child item is active optionally activating the parent.
+     * @param array $items @see items
+     * @param boolean $active should the parent be active too
+     * @return array @see items
+     */
+    protected function isChildActive($items, &$active)
+    {
+        foreach ($items as $i => $child) {
+            if ($this->isItemActive($child)) {
+                Html::addCssClass($items[$i]['options'], 'active');
+                $active = true;
+            }
+        }
+
+        return $items;
     }
 
     /**
