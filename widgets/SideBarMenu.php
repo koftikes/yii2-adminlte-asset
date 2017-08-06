@@ -83,6 +83,8 @@ class SideBarMenu extends Widget
      */
     private $params;
 
+    private $noDefaultAction;
+
     /**
      * Initializes the widget.
      */
@@ -95,6 +97,14 @@ class SideBarMenu extends Widget
         if ($this->params === null) {
             $this->params = Yii::$app->request->getQueryParams();
         }
+
+        if (strpos($this->route, Yii::$app->controller->defaultAction)) {
+            $this->noDefaultAction = false;
+        } else {
+            $posNoDefaultAction = strpos($this->route, Yii::$app->controller->action->id);
+            $this->noDefaultAction = rtrim(substr($this->route, 0, $posNoDefaultAction), '/');
+        }
+
         if ($this->treeViewCaret === null) {
             $this->treeViewCaret = FA::icon('angle-left')->pullRight();
         }
@@ -213,12 +223,16 @@ class SideBarMenu extends Widget
             if ($route[0] !== '/' && Yii::$app->controller) {
                 $route = Yii::$app->controller->module->getUniqueId() . '/' . $route;
             }
-            if (ltrim($route, '/') !== $this->route) {
+
+            $route = ltrim($route, '/');
+            if ($route != $this->route && strpos($route, $this->noDefaultAction) === false) {
                 return false;
             }
+
             unset($item['url']['#']);
             if (count($item['url']) > 1) {
                 $params = $item['url'];
+
                 unset($params[0]);
                 foreach ($params as $name => $value) {
                     if ($value !== null && (!isset($this->params[$name]) || $this->params[$name] != $value)) {
