@@ -201,6 +201,10 @@ class SideBarMenu extends Widget
                 Html::addCssClass($items[$i]['options'], 'active');
                 $active = true;
             }
+            $child_items = ArrayHelper::getValue($child, 'items');
+            if ($child_items != null) {
+                $this->isChildActive($child_items, $active);
+            }
         }
 
         return $items;
